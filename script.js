@@ -1,7 +1,26 @@
+const canvasHeightScale = .8; //The canvas height will be set to this * window.innerHeight
 const canvas = document.querySelector('canvas');
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight * .8;
 const canvasContext = canvas.getContext('2d');
+
+//These will be set every time a new game is started but
+//they need to be global
+let player;
+let projectiles;
+let enemies;
+
+//This will store the interval used to create enemies
+let enemiesInterval;
+
+//A boolean variable that is used to determine if the 
+//game is running or not
+let playing = false;
+
+//Text to be displayed before the score
+//This is a bad practice
+const textForScoreBoard = 'score: ';
+
+//Will be updated by player to show current the current score
+const scoreBoard = document.querySelector('.score-board');
 
 class Vec2DNorm {
   constructor(x, y) {
@@ -37,6 +56,7 @@ class Player {
   updateScore() {
     const updateAmount = 1;
     this.score += updateAmount;
+    scoreBoard.textContent = textForScoreBoard.concat(this.score);
   }
 
   hitByEnemy(enemy) {
@@ -143,27 +163,23 @@ class Enemy {
   }
 }
 
-const player = new Player(canvas.width/2, canvas.height/2, 10, 'blue');
-const projectiles = [];
-const enemies = [];
-
 function gameLoop() {
   // removing projectiles that are out of bounds
+  enemies.forEach((enemy) => {
+    if (player.hitByEnemy(enemy)) {
+        endGame();
+        return;
+      }
+  });
+
   for (let i = projectiles.length-1; i >= 0; i--) {
     if (projectiles[i].outOfBounds()) projectiles.splice(i, 1);
   }
 
-  // removing projectiles and finished enemies if there is a collision
-  // also checking if an enemy is out of bounds just in case
+  //Removing projectiles and finished enemies if there is a collision
   for (let i = projectiles.length-1; i >= 0; i--) {
     for (let j = enemies.length-1; j >= 0; j--) {
-      // end the game if hit by enemy and stop creating enemies
-      if (player.hitByEnemy(enemies[j])) {
-        clearInterval(enemiesInterval);
-        return;
-      }
-      else if (enemies[j].outOfBounds()) enemies.splice(j, 1);
-      else if (projectiles[i].collisionWithEnemy(enemies[j])) {
+      if (projectiles[i].collisionWithEnemy(enemies[j])) {
         player.updateScore();
         projectiles.splice(i, 1);
         if (enemies[j].hit()) enemies.splice(j, 1);
@@ -189,6 +205,9 @@ function gameLoop() {
 }
 
 canvas.addEventListener('click', (event) => {
+  //If the game is not running return
+  if (!playing) return;
+
   const rect = canvas.getBoundingClientRect();
   const elementRelativeX = event.clientX - rect.left;
   const elementRelativeY = event.clientY - rect.top;
@@ -202,11 +221,34 @@ canvas.addEventListener('click', (event) => {
   projectiles.push(projectile);
 });
 
-//Starting the game
-gameLoop();
-let enemiesInterval = setInterval(function () {
-  enemies.push(Enemy.generateRandomEnemy(player.x, player.y));
-}, 2000);
+function endGame() {
+  playing = false;
+  player = null;
+  projectiles = null;
+  enemies = null;
+  clearInterval(enemiesInterval);
+}
+
+function startGame() {
+  //Making sure the canvas height is the correct size before starting
+  canvas.height = window.innerHeight * canvasHeightScale;
+  canvas.width = window.innerWidth;
+
+  //Making sure the score displayed initially is 0
+  scoreBoard.textContent = textForScoreBoard.concat(0);
+
+  //Intializing objects needed in the game
+  player = new Player(canvas.width/2, canvas.height/2, 10, 'blue');
+  projectiles = [];
+  enemies = [];
+  
+  //Starting the game
+  gameLoop();
+  enemiesInterval = setInterval(function () {
+    enemies.push(Enemy.generateRandomEnemy(player.x, player.y));
+  }, 2000);
+  playing = true;
+}
 
 
 
