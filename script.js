@@ -22,6 +22,11 @@ const textForScoreBoard = 'score: ';
 //Will be updated by player to show current the current score
 const scoreBoard = document.querySelector('.score-board');
 
+//TODO:
+//Need to add an onload listener
+const enemyImage = new Image();
+enemyImage.src = 'Images/enemy-image.png';
+
 class Vec2DNorm {
   constructor(x, y) {
     this.x = x;
@@ -47,10 +52,22 @@ class Player {
   }
 
   draw() {
-    canvasContext.beginPath();
-    canvasContext.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
-    canvasContext.fillStyle = this.color;
-    canvasContext.fill();
+    const imgScale = .2;
+
+    canvasContext.drawImage(
+        enemyImage,
+        0,
+        0,
+        enemyImage.naturalWidth,
+        enemyImage.naturalHeight,
+        this.x - enemyImage.naturalWidth*imgScale/2,
+        this.y - enemyImage.naturalHeight*imgScale/2,
+        enemyImage.naturalWidth*imgScale, enemyImage.naturalHeight*imgScale
+    );
+    //canvasContext.beginPath();
+    //canvasContext.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+    //canvasContext.fillStyle = this.color;
+    //canvasContext.fill();
   }
 
   updateScore() {
